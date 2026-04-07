@@ -4,119 +4,355 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>建设项目导航 / Навигатор строительного проекта</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Geologica:wght@300;400;500;600&display=swap');
-  :root{--bg:#0d0f14;--surface:#151820;--surface2:#1c2030;--border:#2a3048;--accent:#e8c547;--accent2:#4f8ef7;--text:#e8ecf4;--text-muted:#7a85a3;--text-dim:#3d4562;--green:#4caf82;--orange:#f08840;--radius:12px;--radius-sm:8px;}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--bg);color:var(--text);font-family:'Geologica',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
-  header{position:sticky;top:0;z-index:100;background:rgba(13,15,20,0.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;}
-  .logo{font-family:'Unbounded',sans-serif;font-weight:900;font-size:13px;letter-spacing:.05em;color:var(--accent);text-transform:uppercase;line-height:1.2;}
-  .logo span{color:var(--text-muted);font-weight:400;}
-  .lang-switch{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:3px;gap:2px;}
-  .lang-btn{padding:6px 16px;border-radius:50px;border:none;cursor:pointer;font-family:'Geologica',sans-serif;font-size:13px;font-weight:500;transition:all .2s;background:transparent;color:var(--text-muted);}
-  .lang-btn.active{background:var(--accent);color:#000;}
-  .hero{padding:48px 24px 32px;max-width:1100px;margin:0 auto;}
-  .hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:50px;padding:6px 14px;font-size:12px;color:var(--text-muted);margin-bottom:20px;letter-spacing:.08em;text-transform:uppercase;}
-  .hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);}
-  h1{font-family:'Unbounded',sans-serif;font-size:clamp(22px,4vw,42px);font-weight:900;line-height:1.15;margin-bottom:16px;letter-spacing:-.02em;}
-  h1 em{font-style:normal;color:var(--accent);}
-  .hero-sub{color:var(--text-muted);font-size:15px;line-height:1.7;max-width:640px;}
-  .pipeline{display:flex;max-width:1100px;margin:0 auto 40px;padding:0 24px;overflow-x:auto;scrollbar-width:none;}
-  .pipeline::-webkit-scrollbar{display:none;}
-  .pipe-stage{flex:1;min-width:120px;cursor:pointer;}
-  .pipe-stage-inner{background:var(--surface);border:1px solid var(--border);border-right:none;padding:14px 16px 12px;transition:all .2s;}
-  .pipe-stage:last-child .pipe-stage-inner{border-right:1px solid var(--border);border-radius:0 var(--radius-sm) var(--radius-sm) 0;}
-  .pipe-stage:first-child .pipe-stage-inner{border-radius:var(--radius-sm) 0 0 var(--radius-sm);}
-  .pipe-stage.active .pipe-stage-inner{background:var(--accent);border-color:var(--accent);}
-  .pipe-stage:hover:not(.active) .pipe-stage-inner{background:var(--surface2);}
-  .pipe-num{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:var(--text-dim);margin-bottom:4px;}
-  .pipe-stage.active .pipe-num{color:rgba(0,0,0,.4);}
-  .pipe-label{font-size:11px;font-weight:500;color:var(--text-muted);line-height:1.3;}
-  .pipe-stage.active .pipe-label{color:#000;font-weight:700;}
-  .pipe-dot{display:flex;gap:3px;margin-top:8px;}
-  .pipe-dot span{width:5px;height:5px;border-radius:50%;background:var(--text-dim);}
-  .pipe-stage.active .pipe-dot span{background:rgba(0,0,0,.3);}
-  .pipe-dot span.done{background:var(--green);}
-  .main{max-width:1100px;margin:0 auto;padding:0 24px 80px;display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start;}
-  .sidebar{position:sticky;top:80px;}
-  .sidebar-title{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:.12em;margin-bottom:12px;padding:0 4px;}
-  .step-list{display:flex;flex-direction:column;gap:4px;}
-  .step-item{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:var(--radius-sm);cursor:pointer;border:1px solid transparent;transition:all .18s;}
-  .step-item:hover{background:var(--surface);border-color:var(--border);}
-  .step-item.active{background:var(--surface2);border-color:var(--accent2);}
-  .step-status{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;margin-top:1px;transition:all .2s;}
-  .step-status.done{background:var(--green);border-color:var(--green);color:#fff;}
-  .step-status.warn{background:var(--orange);border-color:var(--orange);color:#fff;}
-  .step-status.pending{border-color:var(--text-dim);}
-  .step-item.active .step-status.pending{border-color:var(--accent2);}
-  .step-info{flex:1;min-width:0;}
-  .step-code{font-size:10px;color:var(--text-dim);font-family:'Unbounded',sans-serif;margin-bottom:2px;}
-  .step-name{font-size:13px;color:var(--text);line-height:1.35;}
-  .step-item:not(.active) .step-name{color:var(--text-muted);}
-  .step-time{font-size:11px;color:var(--text-dim);margin-top:2px;}
-  .detail{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;animation:fadeIn .25s ease;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .detail-header{padding:24px 28px 20px;border-bottom:1px solid var(--border);background:var(--surface2);}
-  .detail-stage-tag{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;font-family:'Unbounded',sans-serif;font-weight:700;}
-  .detail-title{font-family:'Unbounded',sans-serif;font-size:clamp(14px,2vw,18px);font-weight:700;line-height:1.3;margin-bottom:8px;}
-  .detail-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;}
-  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:50px;font-size:11px;font-weight:500;border:1px solid;text-decoration:none;transition:opacity .15s;}
-  .badge:hover{opacity:.75;}
-  .badge-time{color:var(--accent);border-color:rgba(232,197,71,.3);background:rgba(232,197,71,.08);}
-  .badge-law{color:var(--accent2);border-color:rgba(79,142,247,.3);background:rgba(79,142,247,.08);cursor:pointer;}
-  .badge-who{color:var(--text-muted);border-color:var(--border);background:var(--surface);}
-  .progress-bar{height:3px;background:var(--surface2);border-radius:2px;margin-top:16px;overflow:hidden;}
-  .progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s ease;}
-  .detail-body{padding:24px 28px;}
-  .section-label{font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--text-dim);font-family:'Unbounded',sans-serif;font-weight:700;margin-bottom:12px;margin-top:24px;}
-  .section-label:first-child{margin-top:0;}
-  .desc-text{font-size:14px;line-height:1.75;color:var(--text-muted);}
-  .checklist{display:flex;flex-direction:column;gap:6px;}
-  .check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all .15s;}
-  .check-item:hover{border-color:var(--text-dim);}
-  .check-item.checked{border-color:rgba(76,175,130,.4);background:rgba(76,175,130,.05);}
-  .check-box{width:18px;height:18px;border-radius:4px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s;font-size:11px;}
-  .check-item.checked .check-box{background:var(--green);border-color:var(--green);color:#fff;}
-  .check-text{font-size:13px;color:var(--text-muted);line-height:1.45;}
-  .check-item.checked .check-text{color:var(--text-dim);text-decoration:line-through;}
-  .questions{display:flex;flex-direction:column;gap:8px;}
-  .q-item{padding:12px 16px 12px 36px;background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.2);border-radius:var(--radius-sm);font-size:13px;line-height:1.55;color:var(--text);position:relative;}
-  .q-item::before{content:'Q';position:absolute;left:12px;top:12px;font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;color:var(--accent2);}
-  .warn-block{padding:14px 16px;background:rgba(240,136,64,.08);border:1px solid rgba(240,136,64,.25);border-radius:var(--radius-sm);font-size:13px;line-height:1.6;color:var(--orange);margin-top:8px;}
-  .warn-block strong{display:block;margin-bottom:4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;}
-  .mobile-stage-nav{display:none;padding:16px 24px;gap:8px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);}
-  .mobile-stage-btn{flex-shrink:0;padding:8px 14px;border-radius:50px;border:1px solid var(--border);background:var(--surface);color:var(--text-muted);font-size:12px;cursor:pointer;font-family:'Geologica',sans-serif;transition:all .15s;}
-  .mobile-stage-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
-  .step-nav-mobile{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:12px 16px;gap:12px;z-index:50;}
-  .step-nav-btn{flex:1;padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface2);color:var(--text-muted);font-size:13px;cursor:pointer;font-family:'Geologica',sans-serif;}
-  .step-nav-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600;}
-  footer{border-top:1px solid var(--border);padding:20px 24px;text-align:center;font-size:11px;color:var(--text-dim);}
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #f7f7f5;
+    --surface: #ffffff;
+    --surface2: #f3f4f6;
+    --border: #e2e4e9;
+    --border2: #d0d3db;
+    --accent: #1a6cf0;
+    --accent-light: #eff4ff;
+    --accent2: #0ea86e;
+    --accent2-light: #edfaf5;
+    --warn: #d97706;
+    --warn-light: #fffbeb;
+    --text: #111827;
+    --text-muted: #6b7280;
+    --text-dim: #9ca3af;
+    --green: #0ea86e;
+    --orange: #d97706;
+    --radius: 10px;
+    --radius-sm: 6px;
+    --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+    --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  :lang(zh) body, html[lang="zh-CN"] { font-size: 15px; }
+  html[lang="zh-CN"] .step-name { font-size: 13.5px; }
+  html[lang="zh-CN"] .desc-text { font-size: 14.5px; }
+  html[lang="zh-CN"] .check-text { font-size: 14px; }
+  html[lang="zh-CN"] .q-item { font-size: 14px; }
+  html[lang="zh-CN"] .detail-title { font-size: clamp(15px, 2vw, 19px); }
+
+  /* ── HEADER ── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(247,247,245,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-mark {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .logo-text { line-height: 1.2; }
+  .logo-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--text); letter-spacing: -0.2px;
+  }
+  .logo-sub { font-size: 11px; color: var(--text-muted); }
+
+  .header-right { display: flex; align-items: center; gap: 10px; }
+
+  .lang-switch {
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 3px; gap: 2px;
+  }
+  .lang-btn {
+    padding: 5px 14px; border-radius: 50px; border: none;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    transition: all .15s;
+    background: transparent; color: var(--text-muted);
+  }
+  .lang-btn.active { background: var(--accent); color: #fff; }
+
+  .export-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .export-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .export-btn svg { width:14px; height:14px; flex-shrink:0; }
+
+  /* ── PIPELINE ── */
+  .pipeline {
+    display: flex; max-width: 1100px;
+    margin: 0 auto 32px; padding: 0 24px;
+    overflow-x: auto; scrollbar-width: none; gap: 0;
+  }
+  .pipeline::-webkit-scrollbar { display: none; }
+
+  .pipe-stage { flex: 1; min-width: 110px; cursor: pointer; }
+  .pipe-stage-inner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-right: none;
+    padding: 12px 14px 10px;
+    transition: all .15s;
+  }
+  .pipe-stage:first-child .pipe-stage-inner { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+  .pipe-stage:last-child .pipe-stage-inner { border-right: 1px solid var(--border); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+  .pipe-stage.active .pipe-stage-inner { background: var(--accent); border-color: var(--accent); }
+  .pipe-stage:hover:not(.active) .pipe-stage-inner { background: var(--surface2); }
+
+  .pipe-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px; color: var(--text-dim); margin-bottom: 3px;
+  }
+  .pipe-stage.active .pipe-num { color: rgba(255,255,255,.6); }
+  .pipe-label { font-size: 11px; font-weight: 500; color: var(--text-muted); line-height: 1.3; }
+  .pipe-stage.active .pipe-label { color: #fff; font-weight: 600; }
+  .pipe-dot { display: flex; gap: 3px; margin-top: 7px; }
+  .pipe-dot span { width:5px; height:5px; border-radius:50%; background: var(--border2); }
+  .pipe-stage.active .pipe-dot span { background: rgba(255,255,255,.4); }
+  .pipe-dot span.done { background: var(--green); }
+  .pipe-dot span.partial { background: linear-gradient(90deg, var(--green) 50%, var(--border2) 50%); }
+  .pipe-stage.active .pipe-dot span.partial { background: linear-gradient(90deg, rgba(255,255,255,.9) 50%, rgba(255,255,255,.3) 50%); }
+
+  /* ── MAIN LAYOUT ── */
+  .main {
+    max-width: 1100px; margin: 0 auto;
+    padding: 0 24px 80px;
+    display: grid; grid-template-columns: 280px 1fr;
+    gap: 20px; align-items: start;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar { position: sticky; top: 72px; }
+  .sidebar-title {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.1em;
+    margin-bottom: 8px; padding: 0 4px;
+  }
+  .step-list { display: flex; flex-direction: column; gap: 2px; }
+  .step-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all .15s;
+  }
+  .step-item:hover { background: var(--surface); border-color: var(--border); }
+  .step-item.active { background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+
+  .step-status {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600;
+    flex-shrink: 0; margin-top: 1px;
+    transition: all .15s;
+  }
+  .step-status.done { background: var(--green); border-color: var(--green); color: #fff; }
+  .step-status.warn { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .step-item.active .step-status.pending { border-color: var(--accent); }
+
+  .step-info { flex: 1; min-width: 0; }
+  .step-code { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text-dim); margin-bottom: 1px; }
+  .step-name { font-size: 12px; font-weight: 500; color: var(--text-muted); line-height: 1.35; }
+  .step-item.active .step-name { color: var(--text); }
+  .step-time { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+
+  /* ── DETAIL PANEL ── */
+  .detail {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: fadeUp .2s ease;
+  }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  .detail-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+  .detail-stage-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 8px;
+  }
+  .detail-title {
+    font-size: clamp(14px, 1.8vw, 17px);
+    font-weight: 600; line-height: 1.3;
+    color: var(--text); margin-bottom: 6px;
+  }
+  .detail-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 50px;
+    font-size: 11px; font-weight: 500;
+    border: 1px solid; text-decoration: none;
+    transition: all .15s; white-space: nowrap;
+  }
+  .badge-time { color: var(--text-muted); border-color: var(--border); background: var(--surface); }
+  .badge-who { color: var(--text-muted); border-color: var(--border); background: var(--surface); }
+  .badge-law {
+    color: var(--accent); border-color: rgba(26,108,240,.2);
+    background: var(--accent-light); cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 10px;
+  }
+  .badge-law:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+  .progress-bar { height: 2px; background: var(--border); border-radius: 2px; margin-top: 14px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius:2px; transition: width .4s ease; }
+
+  .detail-body { padding: 20px 24px; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+    color: var(--text-dim); font-weight: 500;
+    margin-bottom: 10px; margin-top: 20px;
+  }
+  .section-label:first-child { margin-top: 0; }
+  .desc-text { font-size: 13px; line-height: 1.7; color: var(--text-muted); }
+
+  /* ── CHECKLIST ── */
+  .checklist { display: flex; flex-direction: column; gap: 4px; }
+  .check-item {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 9px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer; transition: all .12s;
+  }
+  .check-item:hover { border-color: var(--border2); background: #fff; }
+  .check-item.checked { border-color: rgba(14,168,110,.3); background: var(--accent2-light); }
+  .check-box {
+    width: 16px; height: 16px; border-radius: 4px;
+    border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px; transition: all .12s; font-size: 10px;
+  }
+  .check-item.checked .check-box { background: var(--green); border-color: var(--green); color: #fff; }
+  .check-text { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+  .check-item.checked .check-text { color: var(--text-dim); text-decoration: line-through; }
+
+  /* ── QUESTIONS ── */
+  .questions { display: flex; flex-direction: column; gap: 6px; }
+  .q-item {
+    padding: 10px 14px 10px 32px;
+    background: var(--accent-light);
+    border: 1px solid rgba(26,108,240,.12);
+    border-radius: var(--radius-sm);
+    font-size: 13px; line-height: 1.5; color: var(--text);
+    position: relative;
+  }
+  .q-item::before {
+    content: 'Q';
+    position: absolute; left: 10px; top: 10px;
+    font-family: 'DM Mono', monospace; font-size: 9px; font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* ── WARN ── */
+  .warn-block {
+    padding: 12px 14px;
+    background: var(--warn-light);
+    border: 1px solid rgba(217,119,6,.2);
+    border-radius: var(--radius-sm);
+    font-size: 13px; line-height: 1.6; color: var(--warn);
+    margin-top: 8px;
+  }
+  .warn-block strong { display: block; margin-bottom: 3px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'DM Mono', monospace; }
+
+  /* ── MOBILE ── */
+  .mobile-stage-nav { display:none; padding:12px 16px; gap:6px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--border); }
+  .mobile-stage-btn { flex-shrink:0; padding:6px 12px; border-radius:50px; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font-size:11px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s; }
+  .mobile-stage-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:600; }
+  .step-nav-mobile { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-top:1px solid var(--border); padding:10px 16px; gap:10px; z-index:50; }
+  .step-nav-btn { flex:1; padding:10px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--surface2); color:var(--text-muted); font-size:13px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+  .step-nav-btn.primary { background:var(--accent); color:#fff; border-color:var(--accent); font-weight:500; }
+
+  footer { border-top:1px solid var(--border); padding:16px 24px; text-align:center; font-size:11px; color:var(--text-dim); }
+
   @media(max-width:768px){
-    .mobile-stage-nav{display:flex;}.step-nav-mobile{display:flex;}
-    header{padding:0 16px;}.hero{padding:32px 16px 24px;}.pipeline{display:none;}
-    .main{grid-template-columns:1fr;padding:0 16px 60px;}.sidebar{display:none;}
-    .detail-header,.detail-body{padding:18px 20px;}
+    .mobile-stage-nav{display:flex;} .step-nav-mobile{display:flex;}
+    header{padding:0 16px;} .export-btn span{display:none;}
+    .pipeline{display:none;}
+    .main{grid-template-columns:1fr;padding:0 16px 60px;} .sidebar{display:none;}
+    .detail-header,.detail-body{padding:16px;}
   }
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">
-    <div id="logo-title">建设导航</div>
-    <div><span id="logo-sub">工业建设 · 俄罗斯联邦</span></div>
+    <div class="logo-mark">CN</div>
+    <div class="logo-text">
+      <div class="logo-title" id="logo-title">建设导航</div>
+      <div class="logo-sub" id="logo-sub">工业建设 · 俄罗斯联邦</div>
+    </div>
   </div>
-  <div class="lang-switch">
-    <button class="lang-btn" onclick="setLang('ru')">Русский</button>
-    <button class="lang-btn active" onclick="setLang('zh')">中文</button>
+  <div class="header-right">
+    <button class="export-btn" onclick="exportExcel()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M2 10v4h12v-4M8 2v8M5 7l3 3 3-3"/>
+      </svg>
+      <span id="export-label">导出报告</span>
+    </button>
+    <div class="lang-switch">
+      <button class="lang-btn" onclick="setLang('ru')">Русский</button>
+      <button class="lang-btn active" onclick="setLang('zh')">中文</button>
+    </div>
   </div>
 </header>
+
 <div class="mobile-stage-nav" id="mobileStageNav"></div>
-<div class="hero">
-  <div class="hero-tag" id="hero-tag">工业厂房 · 陆上建设</div>
-  <h1 id="hero-title">从立项到<em>产权登记</em></h1>
-  <p class="hero-sub" id="hero-sub">俄罗斯建设项目全流程导航工具。快速定位项目当前所处阶段，核实完成情况，在谈判中提出关键问题。</p>
+
 </div>
+
 <div class="pipeline" id="pipeline"></div>
+
 <div class="main">
   <div class="sidebar">
     <div class="sidebar-title" id="sidebar-title">阶段步骤</div>
@@ -124,389 +360,165 @@
   </div>
   <div id="detailPanel"></div>
 </div>
+
 <div class="step-nav-mobile">
   <button class="step-nav-btn" onclick="navigate(-1)" id="btn-prev">← 上一步</button>
   <button class="step-nav-btn primary" onclick="navigate(1)" id="btn-next">下一步 →</button>
 </div>
-<footer><span id="footer-text">规范依据：城市规划法典 · 土地法典 · 民法典 · 联邦法218 · 联邦法221 · 联邦法174 · 政府决议87 · 145 · 468 · СП 48规范 · 来源：consultant.ru / pravo.gov.ru</span></footer>
+
+<footer><span id="footer-text">规范依据：城市规划法典 · 土地法典 · 民法典 · 联邦法218 · 221 · 174 · 政府决议87 · 145 · 468 · СП48 · 来源：consultant.ru</span></footer>
 
 <script>
-// ─── ПРЯМЫЕ ССЫЛКИ НА ИСТОЧНИКИ (consultant.ru — открытый доступ) ─────────
 const LAWS = {
-  'grk':   { url:'https://www.consultant.ru/document/cons_doc_LAW_51040/', label:'ГрК РФ' },
-  'zk':    { url:'https://www.consultant.ru/document/cons_doc_LAW_33773/', label:'ЗК РФ' },
-  'gk1':   { url:'https://www.consultant.ru/document/cons_doc_LAW_5142/',  label:'ГК РФ ч.1' },
-  'gk2':   { url:'https://www.consultant.ru/document/cons_doc_LAW_9027/',  label:'ГК РФ ч.2' },
-  'fz218': { url:'https://www.consultant.ru/document/cons_doc_LAW_182661/',label:'ФЗ-218' },
-  'fz221': { url:'https://www.consultant.ru/document/cons_doc_LAW_69633/', label:'ФЗ-221' },
-  'fz174': { url:'https://www.consultant.ru/document/cons_doc_LAW_8515/',  label:'ФЗ-174' },
-  'fz384': { url:'https://www.consultant.ru/document/cons_doc_LAW_95720/', label:'ФЗ-384' },
-  'pp87':  { url:'https://www.consultant.ru/document/cons_doc_LAW_75571/', label:'ПП №87' },
-  'pp145': { url:'https://www.consultant.ru/document/cons_doc_LAW_66916/', label:'ПП №145' },
-  'pp468': { url:'https://www.consultant.ru/document/cons_doc_LAW_101587/',label:'ПП №468' },
-  'pp861': { url:'https://www.consultant.ru/document/cons_doc_LAW_91543/', label:'ПП №861' },
-  'pp808': { url:'https://www.consultant.ru/document/cons_doc_LAW_81806/', label:'ПП №808' },
-  'fz416': { url:'https://www.consultant.ru/document/cons_doc_LAW_121895/',label:'ФЗ-416' },
-  'sp48':  { url:'https://docs.cntd.ru/document/554403782',                label:'СП 48.13330.2019' },
+  grk:  {url:'https://www.consultant.ru/document/cons_doc_LAW_51040/',  label:'ГрК РФ'},
+  zk:   {url:'https://www.consultant.ru/document/cons_doc_LAW_33773/',  label:'ЗК РФ'},
+  gk1:  {url:'https://www.consultant.ru/document/cons_doc_LAW_5142/',   label:'ГК РФ ч.1'},
+  gk2:  {url:'https://www.consultant.ru/document/cons_doc_LAW_9027/',   label:'ГК РФ ч.2'},
+  fz218:{url:'https://www.consultant.ru/document/cons_doc_LAW_182661/', label:'ФЗ-218'},
+  fz221:{url:'https://www.consultant.ru/document/cons_doc_LAW_69633/',  label:'ФЗ-221'},
+  fz174:{url:'https://www.consultant.ru/document/cons_doc_LAW_8515/',   label:'ФЗ-174'},
+  fz384:{url:'https://www.consultant.ru/document/cons_doc_LAW_95720/',  label:'ФЗ-384'},
+  pp87: {url:'https://www.consultant.ru/document/cons_doc_LAW_75571/',  label:'ПП №87'},
+  pp145:{url:'https://www.consultant.ru/document/cons_doc_LAW_66916/',  label:'ПП №145'},
+  pp468:{url:'https://www.consultant.ru/document/cons_doc_LAW_101587/', label:'ПП №468'},
+  pp861:{url:'https://www.consultant.ru/document/cons_doc_LAW_91543/',  label:'ПП №861'},
+  pp808:{url:'https://www.consultant.ru/document/cons_doc_LAW_81806/',  label:'ПП №808'},
+  fz416:{url:'https://www.consultant.ru/document/cons_doc_LAW_121895/', label:'ФЗ-416'},
+  sp48: {url:'https://docs.cntd.ru/document/554403782',                 label:'СП 48'},
 };
 
-// Парсим строку вида "ГрК РФ ст.51 [grk]; ЗК РФ гл.V.1 [zk]"
-// в массив {text, key}
-function parseLaw(str) {
-  return str.split(';').map(s => {
-    const m = s.match(/\[(\w+)\]/);
-    return { text: s.replace(/\[\w+\]/, '').trim(), key: m ? m[1] : null };
+function parseLaw(str){
+  return str.split(';').map(s=>{
+    const m=s.match(/\[(\w+)\]/);
+    return {text:s.replace(/\[\w+\]/,'').trim(), key:m?m[1]:null};
   });
 }
 
-// ─── UI STRINGS ───────────────────────────────────────────────────────────────
-const UI = {
+const UI={
   zh:{
-    logoTitle:'建设导航', logoSub:'工业建设 · 俄罗斯联邦',
-    heroTag:'工业厂房 · 陆上建设', heroTitle:'从立项到<em>产权登记</em>',
-    heroSub:'俄罗斯建设项目全流程导航工具。快速定位项目当前所处阶段，核实完成情况，在谈判中提出关键问题。',
-    sidebarTitle:'阶段步骤', stageLabel:'阶段',
-    sectionDesc:'说明', sectionChecks:'核查清单', sectionQuestions:'谈判问题清单',
-    warnLabel:'⚠ 注意', btnPrev:'← 上一步', btnNext:'下一步 →',
-    footer:'规范依据：城市规划法典 · 土地法典 · 民法典 · 联邦法218 · 221 · 174 · 政府决议87 · 145 · 468 · СП 48 · 来源：consultant.ru / pravo.gov.ru',
+    logoTitle:'建设导航',logoSub:'工业建设 · 俄罗斯联邦',
+            sidebarTitle:'阶段步骤',stageLabel:'阶段',
+    sectionDesc:'说明',sectionChecks:'核查清单',sectionQuestions:'谈判问题清单',
+    warnLabel:'⚠ 注意',btnPrev:'← 上一步',btnNext:'下一步 →',
+    exportLabel:'导出报告',
+    footer:'规范依据：城市规划法典 · 土地法典 · 民法典 · 联邦法218 · 221 · 174 · 政府决议87 · 145 · 468 · СП48 · 来源：consultant.ru',
+    excelTitle:'建设项目状态报告',
+    colStage:'阶段',colStep:'步骤编号',colName:'步骤名称',colTime:'所需时间',colStatus:'完成状态',colDone:'已完成项',colTotal:'总项数',
+    statusDone:'✅ 已完成',statusPartial:'⚠️ 进行中',statusPending:'⬜ 未开始',
   },
   ru:{
-    logoTitle:'Навигатор', logoSub:'промышленное строительство · РФ',
-    heroTag:'Промышленные объекты · Наземное строительство', heroTitle:'От идеи до <em>регистрации</em> права',
-    heroSub:'Навигатор по стадиям строительного проекта в России. Определите текущую стадию, проверьте что сделано, задайте правильные вопросы.',
-    sidebarTitle:'Этапы стадии', stageLabel:'Стадия',
-    sectionDesc:'Описание', sectionChecks:'Чеклист', sectionQuestions:'Вопросы для переговоров',
-    warnLabel:'⚠ Внимание', btnPrev:'← Назад', btnNext:'Далее →',
-    footer:'Нормативная база: ГрК РФ · ЗК РФ · ГК РФ · ФЗ-218 · ФЗ-221 · ФЗ-174 · ПП №87 · ПП №145 · ПП №468 · СП 48.13330.2019 · Источник: consultant.ru / pravo.gov.ru',
+    logoTitle:'Навигатор',logoSub:'промышленное строительство · РФ',
+        sidebarTitle:'Этапы стадии',stageLabel:'Стадия',
+    sectionDesc:'Описание',sectionChecks:'Чеклист',sectionQuestions:'Вопросы для переговоров',
+    warnLabel:'⚠ Внимание',btnPrev:'← Назад',btnNext:'Далее →',
+    exportLabel:'Экспорт',
+    footer:'Нормативная база: ГрК РФ · ЗК РФ · ГК РФ · ФЗ-218 · ФЗ-221 · ФЗ-174 · ПП №87 · ПП №145 · ПП №468 · СП 48 · Источник: consultant.ru',
+    excelTitle:'Отчёт о статусе строительного проекта',
+    colStage:'Стадия',colStep:'Шаг',colName:'Наименование этапа',colTime:'Срок',colStatus:'Статус',colDone:'Выполнено',colTotal:'Всего',
+    statusDone:'✅ Выполнено',statusPartial:'⚠️ В процессе',statusPending:'⬜ Не начато',
   }
 };
 
-// ─── DATA ─────────────────────────────────────────────────────────────────────
-// law: строка формата "текст [ключ]; текст [ключ]"
-// ключ ссылается на объект LAWS выше
-const DATA = { stages: [
-  { id:'s1',
-    zh:{name:'预设计阶段',short:'预设计'},
-    ru:{name:'Предпроектная стадия',short:'Предпроект'},
-    steps:[
-      { id:'1.1',
-        zh:{
-          name:'投资论证与项目概念',
-          desc:'明确项目目标、设施的初步参数、投资预估（运营成本/资本支出），以及市场论证。形成设计任务书。',
-          time:'2–3个月', who:'业主、咨询公司',
-          law:'民法典第758–762条（设计承包合同） [gk2]',
-          checks:['已明确项目目标和技术要求','已完成初步投资估算（资本支出/运营成本）','已确定项目实施的组织法律形式','已编制设计任务书'],
-          questions:['是否有经批准的设计任务书（技术规格书）？','是否已完成可行性研究（ТЭО）或预设计方案？','项目所有权形式是什么——私人投资者、政府业主还是混合融资？','是否已确定总承包方和技术业主？'],
-          warn:null
-        },
-        ru:{
-          name:'Инвестиционное обоснование и концепция',
-          desc:'Определяются цели проекта, укрупнённые параметры объекта, предварительная оценка инвестиций (OPEX/CAPEX), рыночное обоснование. Формируется задание на проектирование.',
-          time:'2–3 мес.', who:'Заказчик, консультанты',
-          law:'ГК РФ ст. 758–762 (договор подряда на проектирование) [gk2]',
-          checks:['Сформулированы цели и технические требования к объекту','Выполнена предварительная оценка инвестиций (CAPEX/OPEX)','Определена организационно-правовая форма реализации проекта','Оформлено задание на проектирование'],
-          questions:['Есть ли утверждённое задание на проектирование (ТЗ)?','Выполнялось ли технико-экономическое обоснование (ТЭО)?','Какова форма собственности объекта — частный инвестор, госзаказчик, смешанное финансирование?','Определён ли генеральный заказчик и технический заказчик проекта?'],
-          warn:null
-        }
-      },
-      { id:'1.2',
-        zh:{
-          name:'用地选择与权属办理',
-          desc:'综合考虑土地类别、用途许可类型（ВРИ）、物流及基础设施条件选择地块。通过拍卖办理租赁或购买产权，在不动产登记局完成权属登记。',
-          time:'1–3个月', who:'业主、多功能服务中心（МФЦ）、不动产登记局、地方行政机构',
-          law:'土地法典第V.1章第39.1–39.20条 [zk]; 民法典第34–35章 [gk1]; 联邦法218 [fz218]',
-          checks:['已取得统一国家不动产登记册（ЕГРН）摘录，确认地块权属','土地类别与规划建设用途相符（城镇建设用地或工业用地）','用途许可类型（ВРИ）允许工业建设（或已完成ВРИ变更）','地块权属已在不动产登记局完成登记（租赁或所有权）','租赁期限足以完成建设和竣工验收'],
-          questions:['请提供ЕГРН摘录——地块的类别和用途许可类型是什么？','地块权属人是谁——租赁还是所有权？','租赁期限——是否足以完成完整的建设周期？','地块上是否存在负担、地役权或保护区？','是否进行过ВРИ变更——若有，变更时间及依据是什么？'],
-          warn:{zh:'如果地块的用途许可类型（ВРИ）与规划活动不符，则需要举行公众听证会并获得地方行政部门批准，这可能额外耗时3–6个月。',ru:'Если ВРИ участка не соответствует планируемой деятельности, потребуются публичные слушания и согласование с местной администрацией. Это может занять 3–6 месяцев дополнительно.'}
-        },
-        ru:{
-          name:'Выбор и оформление земельного участка',
-          desc:'Выбор участка с учётом категории земли, вида разрешённого использования (ВРИ), логистики и инфраструктуры. Оформление аренды через аукцион либо приобретение в собственность. Регистрация прав в Росреестре.',
-          time:'1–3 мес.', who:'Заказчик, МФЦ, Росреестр, местная администрация',
-          law:'ЗК РФ гл. V.1 (ст. 39.1–39.20) [zk]; ГК РФ гл. 34–35 [gk1]; ФЗ-218 [fz218]',
-          checks:['Получена выписка из ЕГРН с подтверждением прав на участок','Категория земли соответствует планируемому строительству','ВРИ допускает промышленное строительство (либо выполнено изменение ВРИ)','Права на участок зарегистрированы в Росреестре (аренда или собственность)','Срок аренды достаточен для строительства и ввода объекта'],
-          questions:['Предоставьте выписку из ЕГРН — какова категория и ВРИ участка?','Кто является правообладателем участка — аренда или собственность?','Срок аренды — достаточен ли он для полного строительного цикла?','Есть ли обременения, сервитуты, охранные зоны на участке?','Проводилось ли изменение ВРИ — если да, когда и на каком основании?'],
-          warn:{zh:'如果地块的用途许可类型（ВРИ）与规划活动不符，则需要举行公众听证会并获得地方行政部门批准，这可能额外耗时3–6个月。',ru:'Если ВРИ участка не соответствует планируемой деятельности, потребуются публичные слушания и согласование с местной администрацией. Это может занять 3–6 месяцев дополнительно.'}
-        }
-      },
-      { id:'1.3',
-        zh:{
-          name:'ГПЗУ——地块城建规划条件书',
-          desc:'由地方自治机关根据地块权属人申请出具的文件。规定建设许可参数：最大建筑高度、建筑密度、退界距离（红线）及保护区信息。是设计和申请施工许可证的必要前提文件，自签发之日起有效期3年。',
-          time:'14个工作日（法定）', who:'地方自治机关（通过政务服务门户或多功能服务中心办理）',
-          law:'城市规划法典第57.3条 [grk]',
-          checks:['已取得ГПЗУ且仍在有效期内（未超过3年）','ГПЗУ在完成地块权属登记后取得','ГПЗУ参数与规划项目相符（建筑高度、建筑密度）','ГПЗУ中已反映所有保护区及限制条件'],
-          questions:['请提供ГПЗУ——签发日期是何时？3年有效期是否已到期？','ГПЗУ的参数是否与规划项目的高度和密度要求相符？','ГПЗУ中是否存在保护区限制（高压线、天然气管道、卫生防护区）？','如尚未取得ГПЗУ——目前处于办理的哪个环节？'],
-          warn:null
-        },
-        ru:{
-          name:'ГПЗУ — Градостроительный план земельного участка',
-          desc:'Документ, выдаваемый органом местного самоуправления. Фиксирует разрешённые параметры строительства: максимальную высотность, процент застройки, отступы от границ, сведения об охранных зонах. Действителен 3 года.',
-          time:'14 рабочих дней (по закону)', who:'Орган местного самоуправления (через Госуслуги или МФЦ)',
-          law:'ГрК РФ ст. 57.3 [grk]',
-          checks:['ГПЗУ получен и действует (не истёк 3-летний срок)','ГПЗУ выдан после оформления прав на участок','Параметры ГПЗУ соответствуют планируемому объекту','В ГПЗУ отражены все охранные зоны и ограничения'],
-          questions:['Предоставьте ГПЗУ — какова дата выдачи? Не истёк ли 3-летний срок?','Соответствуют ли параметры ГПЗУ планируемому проекту по высотности и плотности?','Есть ли в ГПЗУ ограничения по охранным зонам (ЛЭП, газопровод, санитарная зона)?','При отсутствии ГПЗУ — на каком этапе находится его получение?'],
-          warn:null
-        }
-      },
-      { id:'1.4',
-        zh:{
-          name:'ППТ/ПМТ——片区规划文件',
-          desc:'片区规划方案（ППТ）在大型地块开发、线性工程建设或法律有明确要求时才需要编制。对于大多数独立工业厂房，无需编制ППТ。地块分割规划（ПМТ）在需要对地块进行分割或合并时才会用到。',
-          time:'4–6个月', who:'地方行政机构、设计院',
-          law:'城市规划法典第42–46条 [grk]',
-          checks:['已确认本项目是否需要编制ППТ','如已有ППТ——已由地方行政机构批准','地块边界无需调整（地籍测量为最新状态）'],
-          questions:['本项目是否需要编制ППТ？','如ППТ已获批——请提供批准决定的文号及日期。','地块形状是否满足项目需求，还是需要分割或合并？'],
-          warn:null
-        },
-        ru:{
-          name:'ППТ / ПМТ — Планировка территории',
-          desc:'Проект планировки территории (ППТ) необходим при освоении крупных земельных массивов или строительстве линейных объектов. Для большинства отдельно стоящих промышленных объектов ППТ не требуется.',
-          time:'4–6 мес.', who:'Местная администрация, проектная организация',
-          law:'ГрК РФ ст. 42–46 [grk]',
-          checks:['Определена необходимость разработки ППТ для данного объекта','При наличии ППТ — он утверждён местной администрацией','Границы земельного участка не требуют корректировки'],
-          questions:['Требуется ли для данного проекта разработка ППТ?','Если ППТ утверждён — предоставьте реквизиты постановления.','Соответствует ли конфигурация участка целям проекта?'],
-          warn:null
-        }
-      }
-    ]
+const DATA={stages:[
+  {id:'s1',
+   zh:{name:'预设计阶段',short:'预设计'},
+   ru:{name:'Предпроектная стадия',short:'Предпроект'},
+   steps:[
+    {id:'1.1',
+     zh:{name:'投资论证与项目概念',desc:'明确项目目标、设施的初步参数、投资预估（运营成本/资本支出），以及市场论证。形成设计任务书。',time:'2–3个月',who:'业主、咨询公司',law:'民法典第758–762条（设计承包合同） [gk2]',checks:['已明确项目目标和技术要求','已完成初步投资估算（资本支出/运营成本）','已确定项目实施的组织法律形式','已编制设计任务书'],questions:['是否有经批准的设计任务书（技术规格书）？','是否已完成可行性研究（ТЭО）或预设计方案？','项目所有权形式是什么——私人投资者、政府业主还是混合融资？','是否已确定总承包方和技术业主？'],warn:null},
+     ru:{name:'Инвестиционное обоснование и концепция',desc:'Определяются цели проекта, укрупнённые параметры объекта, предварительная оценка инвестиций (OPEX/CAPEX), рыночное обоснование. Формируется задание на проектирование.',time:'2–3 мес.',who:'Заказчик, консультанты',law:'ГК РФ ст. 758–762 (договор подряда на проектирование) [gk2]',checks:['Сформулированы цели и технические требования к объекту','Выполнена предварительная оценка инвестиций (CAPEX/OPEX)','Определена организационно-правовая форма реализации проекта','Оформлено задание на проектирование'],questions:['Есть ли утверждённое задание на проектирование (ТЗ)?','Выполнялось ли технико-экономическое обоснование (ТЭО)?','Какова форма собственности объекта?','Определён ли генеральный заказчик и технический заказчик?'],warn:null}
+    },
+    {id:'1.2',
+     zh:{name:'用地选择与权属办理',desc:'综合考虑土地类别、用途许可类型（ВРИ）、物流及基础设施条件选择地块。通过拍卖办理租赁或购买产权，在不动产登记局完成权属登记。',time:'1–3个月',who:'业主、МФЦ、不动产登记局、地方行政机构',law:'土地法典第V.1章第39.1–39.20条 [zk]; 民法典第34–35章 [gk1]; 联邦法218 [fz218]',checks:['已取得ЕГРН摘录，确认地块权属','土地类别与规划建设用途相符（城镇建设用地或工业用地）','用途许可类型（ВРИ）允许工业建设（或已完成ВРИ变更）','地块权属已在不动产登记局完成登记（租赁或所有权）','租赁期限足以完成建设和竣工验收'],questions:['请提供ЕГРН摘录——地块的类别和用途许可类型是什么？','地块权属人是谁——租赁还是所有权？','租赁期限——是否足以完成完整的建设周期？','地块上是否存在负担、地役权或保护区？','是否进行过ВРИ变更？'],warn:{zh:'如果地块的用途许可类型（ВРИ）与规划活动不符，则需要举行公众听证会并获得地方行政部门批准，这可能额外耗时3–6个月。',ru:'Если ВРИ участка не соответствует планируемой деятельности, потребуются публичные слушания и согласование с местной администрацией. Это может занять 3–6 месяцев дополнительно.'}},
+     ru:{name:'Выбор и оформление земельного участка',desc:'Выбор участка с учётом категории земли, вида разрешённого использования (ВРИ), логистики и инфраструктуры. Оформление аренды через аукцион либо приобретение в собственность. Регистрация прав в Росреестре.',time:'1–3 мес.',who:'Заказчик, МФЦ, Росреестр, местная администрация',law:'ЗК РФ гл. V.1 (ст. 39.1–39.20) [zk]; ГК РФ гл. 34–35 [gk1]; ФЗ-218 [fz218]',checks:['Получена выписка из ЕГРН с подтверждением прав на участок','Категория земли соответствует планируемому строительству','ВРИ допускает промышленное строительство (либо выполнено изменение ВРИ)','Права на участок зарегистрированы в Росреестре (аренда или собственность)','Срок аренды достаточен для строительства и ввода объекта'],questions:['Предоставьте выписку из ЕГРН — какова категория и ВРИ участка?','Кто является правообладателем участка?','Срок аренды — достаточен ли он для полного строительного цикла?','Есть ли обременения, сервитуты, охранные зоны на участке?','Проводилось ли изменение ВРИ?'],warn:{zh:'如果地块的用途许可类型（ВРИ）与规划活动不符，则需要举行公众听证会并获得地方行政部门批准，这可能额外耗时3–6个月。',ru:'Если ВРИ участка не соответствует планируемой деятельности, потребуются публичные слушания и согласование с местной администрацией. Это может занять 3–6 месяцев дополнительно.'}}
+    },
+    {id:'1.3',
+     zh:{name:'ГПЗУ——地块城建规划条件书',desc:'由地方自治机关根据地块权属人申请出具的文件。规定建设许可参数：最大建筑高度、建筑密度、退界距离（红线）及保护区信息。是设计和申请施工许可证的必要前提文件，自签发之日起有效期3年。',time:'14个工作日（法定）',who:'地方自治机关（通过政务服务门户或МФЦ办理）',law:'城市规划法典第57.3条 [grk]',checks:['已取得ГПЗУ且仍在有效期内（未超过3年）','ГПЗУ在完成地块权属登记后取得','ГПЗУ参数与规划项目相符（建筑高度、建筑密度）','ГПЗУ中已反映所有保护区及限制条件'],questions:['请提供ГПЗУ——签发日期是何时？3年有效期是否已到期？','ГПЗУ的参数是否与规划项目的高度和密度要求相符？','ГПЗУ中是否存在保护区限制（高压线、天然气管道、卫生防护区）？','如尚未取得ГПЗУ——目前处于办理的哪个环节？'],warn:null},
+     ru:{name:'ГПЗУ — Градостроительный план земельного участка',desc:'Документ, выдаваемый органом местного самоуправления. Фиксирует разрешённые параметры строительства: максимальную высотность, процент застройки, отступы от границ, сведения об охранных зонах. Действителен 3 года.',time:'14 рабочих дней (по закону)',who:'Орган местного самоуправления (через Госуслуги или МФЦ)',law:'ГрК РФ ст. 57.3 [grk]',checks:['ГПЗУ получен и действует (не истёк 3-летний срок)','ГПЗУ выдан после оформления прав на участок','Параметры ГПЗУ соответствуют планируемому объекту','В ГПЗУ отражены все охранные зоны и ограничения'],questions:['Предоставьте ГПЗУ — какова дата выдачи? Не истёк ли 3-летний срок?','Соответствуют ли параметры ГПЗУ планируемому проекту?','Есть ли в ГПЗУ ограничения по охранным зонам?','При отсутствии ГПЗУ — на каком этапе находится его получение?'],warn:null}
+    },
+    {id:'1.4',
+     zh:{name:'ППТ/ПМТ——片区规划文件',desc:'片区规划方案（ППТ）在大型地块开发、线性工程建设或法律有明确要求时才需要编制。对于大多数独立工业厂房，无需编制ППТ。',time:'4–6个月',who:'地方行政机构、设计院',law:'城市规划法典第42–46条 [grk]',checks:['已确认本项目是否需要编制ППТ','如已有ППТ——已由地方行政机构批准','地块边界无需调整（地籍测量为最新状态）'],questions:['本项目是否需要编制ППТ？','如ППТ已获批——请提供批准决定的文号及日期。','地块形状是否满足项目需求，还是需要分割或合并？'],warn:null},
+     ru:{name:'ППТ / ПМТ — Планировка территории',desc:'Проект планировки территории (ППТ) необходим при освоении крупных земельных массивов или строительстве линейных объектов. Для большинства отдельно стоящих промышленных объектов ППТ не требуется.',time:'4–6 мес.',who:'Местная администрация, проектная организация',law:'ГрК РФ ст. 42–46 [grk]',checks:['Определена необходимость разработки ППТ для данного объекта','При наличии ППТ — он утверждён местной администрацией','Границы земельного участка не требуют корректировки'],questions:['Требуется ли для данного проекта разработка ППТ?','Если ППТ утверждён — предоставьте реквизиты постановления.','Соответствует ли конфигурация участка целям проекта?'],warn:null}
+    }
+   ]
   },
-  { id:'s2',
-    zh:{name:'设计阶段',short:'设计'},
-    ru:{name:'Проектирование',short:'Проектирование'},
-    steps:[
-      { id:'2.1',
-        zh:{
-          name:'工程勘察',
-          desc:'综合工作包括大地测量、工程地质、水文及生态勘察。勘察成果是编制设计文件的必要基础，由勘察类自律组织（СРО）成员企业承担。',
-          time:'1–2个月', who:'勘察单位（СРО成员）',
-          law:'城市规划法典第47条 [grk]',
-          checks:['已下达各类勘察的技术委托书','勘察单位具有СРО成员资格','已取得大地测量勘察报告','已取得工程地质勘察报告','如需要——已完成生态勘察'],
-          questions:['该地块是否已进行过工程勘察——何时进行，由哪家单位承担？','请提供勘察报告：地质、大地测量报告。数据时效性如何？','是否存在复杂地质条件（软弱地基、岩溶、洪涝风险）？','是否有辐射状况及土壤生态状况鉴定结论？'],
-          warn:null
-        },
-        ru:{
-          name:'Инженерные изыскания',
-          desc:'Комплекс работ включает геодезические, геологические, гидрологические и экологические изыскания. Результаты изысканий — обязательная основа для разработки проектной документации. Выполняются членами СРО по изысканиям.',
-          time:'1–2 мес.', who:'Организация-изыскатель (член СРО)',
-          law:'ГрК РФ ст. 47 [grk]',
-          checks:['Выданы технические задания на все виды изысканий','Изыскательская организация имеет членство в СРО','Получены отчёты по геодезическим изысканиям','Получены отчёты по инженерно-геологическим изысканиям','При необходимости — выполнены экологические изыскания'],
-          questions:['Выполнялись ли инженерные изыскания на данном участке — когда и кем?','Предоставьте отчёты по изысканиям: геология, геодезия. Срок давности данных?','Выявлены ли сложные геологические условия (слабые грунты, карсты, подтопление)?','Есть ли заключение о радиационной обстановке и экологическом состоянии грунтов?'],
-          warn:null
-        }
-      },
-      { id:'2.2',
-        zh:{
-          name:'市政管网接入技术条件（ТУ）',
-          desc:'ТУ由资源供应企业根据业主申请出具，规定接入点位置、分配容量及技术要求，是设计文件工程管网章节（ИОС）的必备输入文件。',
-          time:'1–2个月（各管网并行办理）', who:'资源供应企业：电力、水务、燃气、热力公司',
-          law:'政府决议第861号（供电） [pp861]; 第808号（供热） [pp808]; 联邦法416（供排水） [fz416]',
-          checks:['已取得供电技术条件','已取得供水技术条件','已取得排水（污水）技术条件','已取得燃气供应技术条件（如需）','已取得供热技术条件（如需）','ТУ有效期未过期（通常为2–5年）'],
-          questions:['请提供全套技术条件文件。各ТУ的有效期至何时？','已分配的容量是否满足规划生产的需求？','是否需要自建管线至接入点（管线长度及费用估算？）','是否已签署技术接入协议，还是仅有ТУ文件？'],
-          warn:{zh:'大型工业项目（670千瓦以上）的供电技术条件（ТУ）审批可能长达6个月，并可能需要自建变电站，这对项目工期至关重要。',ru:'ТУ на электроснабжение для крупных промышленных объектов (от 670 кВт) могут выдаваться до 6 месяцев и требовать строительства собственной подстанции. Это критично для сроков проекта.'}
-        },
-        ru:{
-          name:'Технические условия на подключение к сетям',
-          desc:'ТУ выдаются ресурсоснабжающими организациями по заявлению заказчика. Фиксируют точку подключения, выделяемую мощность, технические требования. Обязательный входной документ для раздела ИОС проектной документации.',
-          time:'1–2 мес. (параллельно по всем сетям)', who:'РСО: энергосбыт, водоканал, газовая служба, теплосеть',
-          law:'ПП РФ №861 (электро) [pp861]; ПП РФ №808 (тепло) [pp808]; ФЗ-416 (вода) [fz416]',
-          checks:['Получены ТУ на электроснабжение','Получены ТУ на водоснабжение','Получены ТУ на водоотведение (канализацию)','Получены ТУ на газоснабжение (при необходимости)','Получены ТУ на теплоснабжение (при необходимости)','Срок действия ТУ не истёк (обычно 2–5 лет)'],
-          questions:['Предоставьте комплект ТУ по всем сетям. Каков срок их действия?','Достаточны ли выделенные мощности для планируемого производства?','Требуется ли строительство собственных сетей до точки подключения?','Заключены ли договоры о технологическом подключении или только ТУ?'],
-          warn:{zh:'大型工业项目（670千瓦以上）的供电技术条件（ТУ）审批可能长达6个月，并可能需要自建变电站，这对项目工期至关重要。',ru:'ТУ на электроснабжение для крупных промышленных объектов (от 670 кВт) могут выдаваться до 6 месяцев и требовать строительства собственной подстанции. Это критично для сроков проекта.'}
-        }
-      },
-      { id:'2.3',
-        zh:{
-          name:'编制设计文件（ПД阶段）',
-          desc:'设计文件按照政府决议第87号规定的组成编制：从说明书到预算共13个部分。2022年起强制使用BIM技术。编制方须为设计类СРО成员单位，ПД是通过国家鉴定的依据。',
-          time:'3–6个月', who:'设计院（设计类СРО成员）',
-          law:'城市规划法典第48条 [grk]; 政府决议第87号 [pp87]; 联邦法384 [fz384]',
-          checks:['已编制完整的ПД（按政府决议第87号第1–13部分）','设计院具有СРО成员资格','ПД中包含消防安全章节（第9部分）','已编制预算（第11/12部分）或有不编制的书面依据','ПД依据最新技术条件和勘察数据编制'],
-          questions:['请提供ПД文件目录（第0卷）。政府决议第87号规定的各章节是否均已编制？','谁是总设计师？是否具有СРО资质？','设计采用何种软件完成？是否有BIM模型？','结合地质条件，基础工程采用了什么技术方案？'],
-          warn:null
-        },
-        ru:{
-          name:'Разработка проектной документации (стадия ПД)',
-          desc:'Проектная документация разрабатывается в составе, установленном ПП РФ №87: 13 разделов от пояснительной записки до сметы. Обязательно применение BIM-технологий (с 2022). Разработчик — проектная организация с членством в СРО.',
-          time:'3–6 мес.', who:'Проектная организация (член СРО проектировщиков)',
-          law:'ГрК РФ ст. 48 [grk]; ПП РФ №87 [pp87]; ФЗ-384 [fz384]',
-          checks:['Разработан полный комплект ПД (разделы 1–13 по ПП №87)','Проектная организация имеет членство в СРО','В составе ПД есть раздел по пожарной безопасности (раздел 9)','Разработана смета (раздел 11/12) или обоснование её отсутствия','ПД разработана на основании актуальных ТУ и данных изысканий'],
-          questions:['Предоставьте состав ПД (том 0). Все ли разделы по ПП №87 разработаны?','Кто является главным проектировщиком? Есть ли СРО-допуск?','На каком ПО выполнено проектирование? Есть ли BIM-модель?','Какие технические решения приняты по фундаментам с учётом геологии?'],
-          warn:null
-        }
-      },
-      { id:'2.4',
-        zh:{
-          name:'设计文件及勘察成果国家鉴定',
-          desc:'对于未纳入城市规划法典第49条第2款豁免范围的所有永久性建筑均为强制要求。审查期限为42个工作日（2025年起不再允许多次延期）。审查通过后出具鉴定正面结论（ЗОЭ）——没有该结论将无法获得施工许可证。',
-          time:'42个工作日（法定）；实际约2–4个月', who:'国家鉴定机构（联邦主鉴定局或地方鉴定机构）',
-          law:'城市规划法典第49条 [grk]; 政府决议第145号 [pp145]',
-          checks:['已取得国家鉴定正面结论（ЗОЭ）','ЗОЭ由该项目类型的有权机构出具','鉴定结论有效——取得结论后设计文件未经修改','如有变更——已对变更部分完成补充鉴定'],
-          questions:['是否已取得鉴定正面结论？请提供文号及日期。','负责鉴定的是哪个机构——联邦主鉴定局还是地方鉴定机构？','取得ЗОЭ后，设计文件是否进行过修改？','如尚未通过鉴定——目前处于审查哪个阶段，存在哪些意见？'],
-          warn:{zh:'鉴定负面结论将直接阻断施工许可证的发放。整改意见并重新提交通常需要额外1–3个月。',ru:'Отрицательное заключение экспертизы блокирует выдачу разрешения на строительство. Устранение замечаний и повторная подача занимают 1–3 месяца дополнительно.'}
-        },
-        ru:{
-          name:'Государственная экспертиза ПД и результатов изысканий',
-          desc:'Обязательна для всех объектов капитального строительства, не включённых в перечень исключений ГрК ст. 49 ч. 2. Срок — 42 рабочих дня (с 2025 года без возможности неоднократного продления). По итогам выдаётся положительное заключение экспертизы (ЗОЭ).',
-          time:'42 рабочих дня (закон); реально 2–4 мес.', who:'Государственная экспертиза (Главгосэкспертиза или региональная)',
-          law:'ГрК РФ ст. 49 [grk]; ПП РФ №145 [pp145]',
-          checks:['Получено положительное заключение государственной экспертизы (ЗОЭ)','ЗОЭ выдано органом, уполномоченным для данного объекта','Заключение действует — ПД не изменялась после его получения','В случае изменений — выполнена повторная экспертиза изменённых разделов'],
-          questions:['Получено ли положительное заключение экспертизы? Предоставьте его реквизиты.','Какой орган проводил экспертизу — Главгосэкспертиза или региональная?','Вносились ли изменения в ПД после получения ЗОЭ?','Если экспертиза не пройдена — на каком этапе рассмотрение, какие замечания?'],
-          warn:{zh:'鉴定负面结论将直接阻断施工许可证的发放。整改意见并重新提交通常需要额外1–3个月。',ru:'Отрицательное заключение экспертизы блокирует выдачу разрешения на строительство. Устранение замечаний и повторная подача занимают 1–3 месяца дополнительно.'}
-        }
-      }
-    ]
+  {id:'s2',
+   zh:{name:'设计阶段',short:'设计'},
+   ru:{name:'Проектирование',short:'Проектирование'},
+   steps:[
+    {id:'2.1',
+     zh:{name:'工程勘察',desc:'综合工作包括大地测量、工程地质、水文及生态勘察。勘察成果是编制设计文件的必要基础，由勘察类СРО成员企业承担。',time:'1–2个月',who:'勘察单位（СРО成员）',law:'城市规划法典第47条 [grk]',checks:['已下达各类勘察的技术委托书','勘察单位具有СРО成员资格','已取得大地测量勘察报告','已取得工程地质勘察报告','如需要——已完成生态勘察'],questions:['该地块是否已进行过工程勘察——何时进行，由哪家单位承担？','请提供勘察报告。数据时效性如何？','是否存在复杂地质条件（软弱地基、岩溶、洪涝风险）？','是否有辐射状况及土壤生态状况鉴定结论？'],warn:null},
+     ru:{name:'Инженерные изыскания',desc:'Комплекс работ включает геодезические, геологические, гидрологические и экологические изыскания. Результаты изысканий — обязательная основа для разработки проектной документации. Выполняются членами СРО по изысканиям.',time:'1–2 мес.',who:'Организация-изыскатель (член СРО)',law:'ГрК РФ ст. 47 [grk]',checks:['Выданы технические задания на все виды изысканий','Изыскательская организация имеет членство в СРО','Получены отчёты по геодезическим изысканиям','Получены отчёты по инженерно-геологическим изысканиям','При необходимости — выполнены экологические изыскания'],questions:['Выполнялись ли инженерные изыскания на данном участке — когда и кем?','Предоставьте отчёты по изысканиям. Срок давности данных?','Выявлены ли сложные геологические условия?','Есть ли заключение о радиационной обстановке и экологическом состоянии грунтов?'],warn:null}
+    },
+    {id:'2.2',
+     zh:{name:'市政管网接入技术条件（ТУ）',desc:'ТУ由资源供应企业根据业主申请出具，规定接入点位置、分配容量及技术要求，是设计文件工程管网章节（ИОС）的必备输入文件。',time:'1–2个月（各管网并行办理）',who:'资源供应企业：电力、水务、燃气、热力公司',law:'政府决议第861号（供电） [pp861]; 第808号（供热） [pp808]; 联邦法416（供排水） [fz416]',checks:['已取得供电技术条件','已取得供水技术条件','已取得排水（污水）技术条件','已取得燃气供应技术条件（如需）','已取得供热技术条件（如需）','ТУ有效期未过期（通常为2–5年）'],questions:['请提供全套技术条件文件。各ТУ的有效期至何时？','已分配的容量是否满足规划生产的需求？','是否需要自建管线至接入点？','是否已签署技术接入协议，还是仅有ТУ文件？'],warn:{zh:'大型工业项目（670千瓦以上）的供电ТУ审批可能长达6个月，并可能需要自建变电站，这对项目工期至关重要。',ru:'ТУ на электроснабжение для крупных промышленных объектов (от 670 кВт) могут выдаваться до 6 месяцев и требовать строительства собственной подстанции. Это критично для сроков проекта.'}},
+     ru:{name:'Технические условия на подключение к сетям',desc:'ТУ выдаются ресурсоснабжающими организациями по заявлению заказчика. Фиксируют точку подключения, выделяемую мощность, технические требования. Обязательный входной документ для раздела ИОС проектной документации.',time:'1–2 мес. (параллельно по всем сетям)',who:'РСО: энергосбыт, водоканал, газовая служба, теплосеть',law:'ПП РФ №861 (электро) [pp861]; ПП РФ №808 (тепло) [pp808]; ФЗ-416 (вода) [fz416]',checks:['Получены ТУ на электроснабжение','Получены ТУ на водоснабжение','Получены ТУ на водоотведение (канализацию)','Получены ТУ на газоснабжение (при необходимости)','Получены ТУ на теплоснабжение (при необходимости)','Срок действия ТУ не истёк (обычно 2–5 лет)'],questions:['Предоставьте комплект ТУ по всем сетям. Каков срок их действия?','Достаточны ли выделенные мощности для планируемого производства?','Требуется ли строительство собственных сетей до точки подключения?','Заключены ли договоры о технологическом подключении или только ТУ?'],warn:{zh:'大型工业项目（670千瓦以上）的供电ТУ审批可能长达6个月，并可能需要自建变电站，这对项目工期至关重要。',ru:'ТУ на электроснабжение для крупных промышленных объектов (от 670 кВт) могут выдаваться до 6 месяцев и требовать строительства собственной подстанции. Это критично для сроков проекта.'}}
+    },
+    {id:'2.3',
+     zh:{name:'编制设计文件（ПД阶段）',desc:'设计文件按照政府决议第87号规定的组成编制：从说明书到预算共13个部分。2022年起强制使用BIM技术。编制方须为设计类СРО成员单位。',time:'3–6个月',who:'设计院（设计类СРО成员）',law:'城市规划法典第48条 [grk]; 政府决议第87号 [pp87]; 联邦法384 [fz384]',checks:['已编制完整的ПД（按政府决议第87号第1–13部分）','设计院具有СРО成员资格','ПД中包含消防安全章节（第9部分）','已编制预算（第11/12部分）或有不编制的书面依据','ПД依据最新技术条件和勘察数据编制'],questions:['请提供ПД文件目录（第0卷）。各章节是否均已编制？','谁是总设计师？是否具有СРО资质？','设计采用何种软件完成？是否有BIM模型？','结合地质条件，基础工程采用了什么技术方案？'],warn:null},
+     ru:{name:'Разработка проектной документации (стадия ПД)',desc:'Проектная документация разрабатывается в составе, установленном ПП РФ №87: 13 разделов от пояснительной записки до сметы. Обязательно применение BIM-технологий (с 2022). Разработчик — проектная организация с членством в СРО.',time:'3–6 мес.',who:'Проектная организация (член СРО проектировщиков)',law:'ГрК РФ ст. 48 [grk]; ПП РФ №87 [pp87]; ФЗ-384 [fz384]',checks:['Разработан полный комплект ПД (разделы 1–13 по ПП №87)','Проектная организация имеет членство в СРО','В составе ПД есть раздел по пожарной безопасности (раздел 9)','Разработана смета (раздел 11/12) или обоснование её отсутствия','ПД разработана на основании актуальных ТУ и данных изысканий'],questions:['Предоставьте состав ПД (том 0). Все ли разделы по ПП №87 разработаны?','Кто является главным проектировщиком? Есть ли СРО-допуск?','На каком ПО выполнено проектирование? Есть ли BIM-модель?','Какие технические решения приняты по фундаментам с учётом геологии?'],warn:null}
+    },
+    {id:'2.4',
+     zh:{name:'设计文件及勘察成果国家鉴定',desc:'对于未纳入城市规划法典第49条第2款豁免范围的所有永久性建筑均为强制要求。审查期限为42个工作日（2025年起不再允许多次延期）。审查通过后出具鉴定正面结论（ЗОЭ）——没有该结论将无法获得施工许可证。',time:'42个工作日（法定）；实际约2–4个月',who:'国家鉴定机构（联邦主鉴定局或地方鉴定机构）',law:'城市规划法典第49条 [grk]; 政府决议第145号 [pp145]',checks:['已取得国家鉴定正面结论（ЗОЭ）','ЗОЭ由该项目类型的有权机构出具','鉴定结论有效——取得结论后设计文件未经修改','如有变更——已对变更部分完成补充鉴定'],questions:['是否已取得鉴定正面结论？请提供文号及日期。','负责鉴定的是哪个机构——联邦主鉴定局还是地方鉴定机构？','取得ЗОЭ后，设计文件是否进行过修改？','如尚未通过鉴定——目前处于审查哪个阶段，存在哪些意见？'],warn:{zh:'鉴定负面结论将直接阻断施工许可证的发放。整改意见并重新提交通常需要额外1–3个月。',ru:'Отрицательное заключение экспертизы блокирует выдачу разрешения на строительство. Устранение замечаний и повторная подача занимают 1–3 месяца дополнительно.'}},
+     ru:{name:'Государственная экспертиза ПД и результатов изысканий',desc:'Обязательна для всех объектов капитального строительства, не включённых в перечень исключений ГрК ст. 49 ч. 2. Срок — 42 рабочих дня (с 2025 года без возможности неоднократного продления). По итогам выдаётся положительное заключение экспертизы (ЗОЭ).',time:'42 рабочих дня (закон); реально 2–4 мес.',who:'Государственная экспертиза (Главгосэкспертиза или региональная)',law:'ГрК РФ ст. 49 [grk]; ПП РФ №145 [pp145]',checks:['Получено положительное заключение государственной экспертизы (ЗОЭ)','ЗОЭ выдано органом, уполномоченным для данного объекта','Заключение действует — ПД не изменялась после его получения','В случае изменений — выполнена повторная экспертиза изменённых разделов'],questions:['Получено ли положительное заключение экспертизы? Предоставьте его реквизиты.','Какой орган проводил экспертизу — Главгосэкспертиза или региональная?','Вносились ли изменения в ПД после получения ЗОЭ?','Если экспертиза не пройдена — на каком этапе рассмотрение, какие замечания?'],warn:{zh:'鉴定负面结论将直接阻断施工许可证的发放。整改意见并重新提交通常需要额外1–3个月。',ru:'Отрицательное заключение экспертизы блокирует выдачу разрешения на строительство. Устранение замечаний и повторная подача занимают 1–3 месяца дополнительно.'}}
+    }
+   ]
   },
-  { id:'s3',
-    zh:{name:'施工许可证',short:'施工许可'},
-    ru:{name:'Разрешение на строительство',short:'РС'},
-    steps:[
-      { id:'3.1',
-        zh:{
-          name:'取得施工许可证（РС）',
-          desc:'施工许可证是开始实体施工的法律依据，由地方自治机关颁发。有效期由施工组织设计（ПОС）确定。重要提示：自2026年3月1日起，城市规划法典第51条将有重大修订（联邦法304号，2025年7月31日）。',
-          time:'5个工作日（法定）；实际1–2个月', who:'地方自治机关或有权机关',
-          law:'城市规划法典第51条 [grk]',
-          checks:['已取得施工许可证','施工许可证有效期足以完成建设','施工许可证由有权机关颁发','施工许可证中载明的项目参数正确无误'],
-          questions:['是否已取得施工许可证？请提供副本。','施工许可证有效期至何时？是否与规划工期相符？','如尚未取得施工许可证——障碍在哪里？','施工许可证是否与当前版本的设计文件相对应？'],
-          warn:{zh:'自2026年3月1日起，城市规划法典第51条按新版本执行（联邦法304号，2025年7月31日）。该日期前已颁发的施工许可证按原条件继续有效。',ru:'С 01.03.2026 ст. 51 ГрК РФ действует в новой редакции (ФЗ-304 от 31.07.2025). РС, выданные до этой даты, действуют на прежних условиях.'}
-        },
-        ru:{
-          name:'Получение разрешения на строительство (РС)',
-          desc:'Разрешение на строительство — финальный документ, открывающий право на физическое строительство. Выдаётся органом местного самоуправления. Срок действия определяется проектом организации строительства (ПОС). С 01.03.2026 вступают в силу изменения ст. 51 ГрК РФ.',
-          time:'5 раб. дней (закон); реально 1–2 мес.', who:'Орган местного самоуправления или уполномоченный орган',
-          law:'ГрК РФ ст. 51 [grk]',
-          checks:['Получено разрешение на строительство','Срок действия РС достаточен для завершения строительства','РС выдано надлежащим уполномоченным органом','В РС указаны корректные параметры объекта'],
-          questions:['Получено ли разрешение на строительство? Предоставьте копию.','Каков срок действия РС? Соответствует ли он планируемым срокам строительства?','Если РС не получено — что является препятствием?','Соответствует ли РС текущей версии проектной документации?'],
-          warn:{zh:'自2026年3月1日起，城市规划法典第51条按新版本执行（联邦法304号，2025年7月31日）。该日期前已颁发的施工许可证按原条件继续有效。',ru:'С 01.03.2026 ст. 51 ГрК РФ действует в новой редакции (ФЗ-304 от 31.07.2025). РС, выданные до этой даты, действуют на прежних условиях.'}
-        }
-      }
-    ]
+  {id:'s3',
+   zh:{name:'施工许可证',short:'施工许可'},
+   ru:{name:'Разрешение на строительство',short:'РС'},
+   steps:[
+    {id:'3.1',
+     zh:{name:'取得施工许可证（РС）',desc:'施工许可证是开始实体施工的法律依据，由地方自治机关颁发。有效期由施工组织设计（ПОС）确定。重要提示：自2026年3月1日起，城市规划法典第51条将有重大修订（联邦法304号，2025年7月31日）。',time:'5个工作日（法定）；实际1–2个月',who:'地方自治机关或有权机关',law:'城市规划法典第51条 [grk]',checks:['已取得施工许可证','施工许可证有效期足以完成建设','施工许可证由有权机关颁发','施工许可证中载明的项目参数正确无误'],questions:['是否已取得施工许可证？请提供副本。','施工许可证有效期至何时？是否与规划工期相符？','如尚未取得施工许可证——障碍在哪里？','施工许可证是否与当前版本的设计文件相对应？'],warn:{zh:'自2026年3月1日起，城市规划法典第51条按新版本执行（联邦法304号，2025年7月31日）。该日期前已颁发的施工许可证按原条件继续有效。',ru:'С 01.03.2026 ст. 51 ГрК РФ действует в новой редакции (ФЗ-304 от 31.07.2025). РС, выданные до этой даты, действуют на прежних условиях.'}},
+     ru:{name:'Получение разрешения на строительство (РС)',desc:'Разрешение на строительство — финальный документ, открывающий право на физическое строительство. Выдаётся органом местного самоуправления. Срок действия определяется ПОС. С 01.03.2026 вступают в силу изменения ст. 51 ГрК РФ.',time:'5 раб. дней (закон); реально 1–2 мес.',who:'Орган местного самоуправления или уполномоченный орган',law:'ГрК РФ ст. 51 [grk]',checks:['Получено разрешение на строительство','Срок действия РС достаточен для завершения строительства','РС выдано надлежащим уполномоченным органом','В РС указаны корректные параметры объекта'],questions:['Получено ли разрешение на строительство? Предоставьте копию.','Каков срок действия РС? Соответствует ли он планируемым срокам строительства?','Если РС не получено — что является препятствием?','Соответствует ли РС текущей версии проектной документации?'],warn:{zh:'自2026年3月1日起，城市规划法典第51条按新版本执行（联邦法304号，2025年7月31日）。该日期前已颁发的施工许可证按原条件继续有效。',ru:'С 01.03.2026 ст. 51 ГрК РФ действует в новой редакции (ФЗ-304 от 31.07.2025). РС, выданные до этой даты, действуют на прежних условиях.'}}
+    }
+   ]
   },
-  { id:'s4',
-    zh:{name:'施工阶段',short:'施工'},
-    ru:{name:'Строительство',short:'Строительство'},
-    steps:[
-      { id:'4.1',
-        zh:{
-          name:'开工通知及建设监理',
-          desc:'施工开始前，业主须向国家建设监督局（Госстройнадзор）提交开工通知，并确保建设监理工作的开展。建设监理由业主和承包方按政府决议第468号要求共同执行。总承包商须为建筑类СРО成员。',
-          time:'贯穿整个施工过程', who:'业主、总承包商（СРО成员）、国家建设监督局',
-          law:'城市规划法典第52条 [grk]; 政府决议第468号 [pp468]; СП 48规范 [sp48]',
-          checks:['已向国家建设监督局提交开工通知','已签署总承包合同','总承包商具有建筑类СРО成员资格','已指定建设监理负责人','已开立工程总日志（КС-6格式）','已取得土方作业许可（如需）'],
-          questions:['是否已提交开工通知？提交时间？','谁是总承包商？请提供СРО资质信息。','是否在记录施工总日志？能否查阅最近的记录？','业主方是否在现场设有技术监督人员？','国家建设监督局是否已进行过检查？是否有整改通知？'],
-          warn:null
-        },
-        ru:{
-          name:'Извещение о начале работ и строительный контроль',
-          desc:'До начала строительства заказчик обязан направить извещение в Госстройнадзор и обеспечить ведение строительного контроля в соответствии с ПП РФ №468. Генеральный подрядчик должен быть членом СРО строителей.',
-          time:'Постоянно в ходе строительства', who:'Заказчик, генподрядчик (член СРО), Госстройнадзор',
-          law:'ГрК РФ ст. 52 [grk]; ПП РФ №468 [pp468]; СП 48.13330.2019 [sp48]',
-          checks:['Направлено извещение о начале строительства в Госстройнадзор','Заключён договор генерального подряда','Генподрядчик имеет членство в СРО строителей','Назначен ответственный за строительный контроль','Открыт общий журнал работ (форма КС-6)','На объект выдан ордер на земляные работы (при необходимости)'],
-          questions:['Направлено ли извещение о начале работ? Когда?','Кто является генеральным подрядчиком? Предоставьте данные СРО-допуска.','Ведётся ли общий журнал работ? Можно ли ознакомиться с последними записями?','Назначен ли технический надзор от заказчика на объекте?','Проводились ли проверки Госстройнадзора? Есть ли предписания?'],
-          warn:null
-        }
-      },
-      { id:'4.2',
-        zh:{
-          name:'设计监督与竣工技术档案',
-          desc:'设计监督（авторский надзор）由设计方在施工过程中实施，对通过国家鉴定的项目为强制要求（城市规划法典第52条第2款）。竣工技术档案记录所有隐蔽工程的实际参数，是竣工验收的依据。',
-          time:'贯穿整个施工过程', who:'设计院（设计监督）、总承包商（竣工档案）',
-          law:'城市规划法典第52条第2款 [grk]; СП 48规范第5节 [sp48]',
-          checks:['已与设计方签署设计监督合同','设计监督日志正在记录中','隐蔽工程验收记录正在办理','已完成已施工构件的竣工测量','竣工技术档案已妥善保存并系统整理'],
-          questions:['是否已与设计方签署设计监督合同？','设计监督日志是否在记录？设计方现场巡查的频率如何？','竣工技术档案如何管理——是否有专职负责人？','所有隐蔽工程是否均已完成验收记录？'],
-          warn:null
-        },
-        ru:{
-          name:'Авторский надзор и исполнительная документация',
-          desc:'Авторский надзор осуществляется проектировщиком в ходе строительства и является обязательным для объектов, проходящих госэкспертизу (ГрК ст. 52 ч. 2). Исполнительная документация фиксирует фактические параметры всех скрытых работ.',
-          time:'В ходе всего строительства', who:'Проектная организация (авт. надзор), генподрядчик (исп. документация)',
-          law:'ГрК РФ ст. 52 ч. 2 [grk]; СП 48.13330.2019 разд. 5 [sp48]',
-          checks:['Заключён договор на авторский надзор с проектировщиком','Ведётся журнал авторского надзора','Оформляются акты освидетельствования скрытых работ','Ведётся исполнительная съёмка по выполненным конструкциям','Исполнительная документация хранится и систематизирована'],
-          questions:['Заключён ли договор на авторский надзор с проектировщиком?','Ведётся ли журнал авторского надзора? Насколько регулярны выезды проектировщика?','Как организовано ведение исполнительной документации?','Все ли скрытые работы освидетельствованы актами?'],
-          warn:null
-        }
-      }
-    ]
+  {id:'s4',
+   zh:{name:'施工阶段',short:'施工'},
+   ru:{name:'Строительство',short:'Строительство'},
+   steps:[
+    {id:'4.1',
+     zh:{name:'开工通知及建设监理',desc:'施工开始前，业主须向国家建设监督局（Госстройнадзор）提交开工通知，并确保建设监理工作的开展。建设监理由业主和承包方按政府决议第468号要求共同执行。总承包商须为建筑类СРО成员。',time:'贯穿整个施工过程',who:'业主、总承包商（СРО成员）、国家建设监督局',law:'城市规划法典第52条 [grk]; 政府决议第468号 [pp468]; СП 48规范 [sp48]',checks:['已向国家建设监督局提交开工通知','已签署总承包合同','总承包商具有建筑类СРО成员资格','已指定建设监理负责人','已开立工程总日志（КС-6格式）','已取得土方作业许可（如需）'],questions:['是否已提交开工通知？提交时间？','谁是总承包商？请提供СРО资质信息。','是否在记录施工总日志？能否查阅最近的记录？','业主方是否在现场设有技术监督人员？','国家建设监督局是否已进行过检查？是否有整改通知？'],warn:null},
+     ru:{name:'Извещение о начале работ и строительный контроль',desc:'До начала строительства заказчик обязан направить извещение в Госстройнадзор и обеспечить ведение строительного контроля в соответствии с ПП РФ №468. Генеральный подрядчик должен быть членом СРО строителей.',time:'Постоянно в ходе строительства',who:'Заказчик, генподрядчик (член СРО), Госстройнадзор',law:'ГрК РФ ст. 52 [grk]; ПП РФ №468 [pp468]; СП 48.13330.2019 [sp48]',checks:['Направлено извещение о начале строительства в Госстройнадзор','Заключён договор генерального подряда','Генподрядчик имеет членство в СРО строителей','Назначен ответственный за строительный контроль','Открыт общий журнал работ (форма КС-6)','На объект выдан ордер на земляные работы (при необходимости)'],questions:['Направлено ли извещение о начале работ? Когда?','Кто является генеральным подрядчиком? Предоставьте данные СРО-допуска.','Ведётся ли общий журнал работ?','Назначен ли технический надзор от заказчика?','Проводились ли проверки Госстройнадзора? Есть ли предписания?'],warn:null}
+    },
+    {id:'4.2',
+     zh:{name:'设计监督与竣工技术档案',desc:'设计监督（авторский надзор）由设计方在施工过程中实施，对通过国家鉴定的项目为强制要求（城市规划法典第52条第2款）。竣工技术档案记录所有隐蔽工程的实际参数，是竣工验收的依据。',time:'贯穿整个施工过程',who:'设计院（设计监督）、总承包商（竣工档案）',law:'城市规划法典第52条第2款 [grk]; СП 48规范第5节 [sp48]',checks:['已与设计方签署设计监督合同','设计监督日志正在记录中','隐蔽工程验收记录正在办理','已完成已施工构件的竣工测量','竣工技术档案已妥善保存并系统整理'],questions:['是否已与设计方签署设计监督合同？','设计监督日志是否在记录？设计方现场巡查的频率如何？','竣工技术档案如何管理——是否有专职负责人？','所有隐蔽工程是否均已完成验收记录？'],warn:null},
+     ru:{name:'Авторский надзор и исполнительная документация',desc:'Авторский надзор осуществляется проектировщиком в ходе строительства и является обязательным для объектов, проходящих госэкспертизу (ГрК ст. 52 ч. 2). Исполнительная документация фиксирует фактические параметры всех скрытых работ.',time:'В ходе всего строительства',who:'Проектная организация (авт. надзор), генподрядчик (исп. документация)',law:'ГрК РФ ст. 52 ч. 2 [grk]; СП 48.13330.2019 разд. 5 [sp48]',checks:['Заключён договор на авторский надзор с проектировщиком','Ведётся журнал авторского надзора','Оформляются акты освидетельствования скрытых работ','Ведётся исполнительная съёмка по выполненным конструкциям','Исполнительная документация хранится и систематизирована'],questions:['Заключён ли договор на авторский надзор с проектировщиком?','Ведётся ли журнал авторского надзора?','Как организовано ведение исполнительной документации?','Все ли скрытые работы освидетельствованы актами?'],warn:null}
+    }
+   ]
   },
-  { id:'s5',
-    zh:{name:'竣工阶段',short:'竣工'},
-    ru:{name:'Завершение строительства',short:'Завершение'},
-    steps:[
-      { id:'5.1',
-        zh:{
-          name:'最终验收测试与竣工档案汇编',
-          desc:'在申请竣工验收许可前，须对所有工程系统进行测试：消防报警、通风、供电、供水系统。编制最终验收记录，完整汇编竣工技术档案。',
-          time:'1–2个月', who:'总承包商、专业单位、业主',
-          law:'城市规划法典第55条 [grk]; СП 48规范 [sp48]',
-          checks:['已完成消防安全系统测试','已完成通风及空调系统测试','已完成供电系统测试（负载测试）','已完成管道水压测试','竣工技术档案已完整汇编','所有建设监理意见已整改完毕'],
-          questions:['所有系统的调试和测试工作是否已全部完成？','所有工程系统是否均有测试记录？','竣工技术档案是否已完整汇编？','国家建设监督局的所有整改通知是否已完成整改？'],
-          warn:null
-        },
-        ru:{
-          name:'Финальные испытания и комплектация исп. документации',
-          desc:'Перед получением разрешения на ввод проводятся испытания всех инженерных систем: пожарная сигнализация, вентиляция, электроснабжение, водоснабжение. Составляются финальные акты.',
-          time:'1–2 мес.', who:'Генподрядчик, специализированные организации, заказчик',
-          law:'ГрК РФ ст. 55 [grk]; СП 48.13330.2019 [sp48]',
-          checks:['Проведены испытания систем пожарной безопасности','Проведены испытания вентиляции и кондиционирования','Проведены испытания электроснабжения (нагрузочные испытания)','Проведены гидравлические испытания трубопроводов','Скомплектована полная исполнительная документация','Устранены все замечания строительного контроля'],
-          questions:['Завершены ли все пуско-наладочные работы и испытания систем?','Есть ли акты испытаний по всем инженерным системам?','Скомплектована ли исполнительная документация в полном объёме?','Устранены ли все предписания Госстройнадзора?'],
-          warn:null
-        }
-      },
-      { id:'5.2',
-        zh:{
-          name:'竣工验收许可证（РВЭ）',
-          desc:'由颁发施工许可证的同一机关颁发。申请时须提交完整的竣工技术档案、测试记录、地块权属证明、施工许可证及通过鉴定的设计文件。这是确认建设完工的最终法律文件。',
-          time:'5个工作日（法定）；实际2–4周', who:'颁发施工许可证的机关',
-          law:'城市规划法典第55条 [grk]',
-          checks:['已取得竣工验收许可证','竣工验收许可证由有权机关颁发','竣工验收许可证中的项目参数与设计文件相符'],
-          questions:['是否已取得竣工验收许可证？','如尚未取得——障碍在哪里？','实际建设参数是否与设计文件相符？'],
-          warn:null
-        },
-        ru:{
-          name:'Разрешение на ввод в эксплуатацию (РВЭ)',
-          desc:'Выдаётся тем же органом, который выдавал разрешение на строительство. Для получения необходимо предоставить полный комплект исполнительной документации, акты испытаний, документ о праве на участок, разрешение на строительство, ПД с экспертизой.',
-          time:'5 раб. дней (закон); реально 2–4 нед.', who:'Орган, выдавший РС',
-          law:'ГрК РФ ст. 55 [grk]',
-          checks:['Получено разрешение на ввод в эксплуатацию','РВЭ выдано надлежащим органом','Параметры объекта в РВЭ соответствуют ПД'],
-          questions:['Получено ли разрешение на ввод в эксплуатацию?','Если нет — что является препятствием?','Соответствуют ли фактические параметры объекта проектной документации?'],
-          warn:null
-        }
-      }
-    ]
+  {id:'s5',
+   zh:{name:'竣工阶段',short:'竣工'},
+   ru:{name:'Завершение строительства',short:'Завершение'},
+   steps:[
+    {id:'5.1',
+     zh:{name:'最终验收测试与竣工档案汇编',desc:'在申请竣工验收许可前，须对所有工程系统进行测试：消防报警、通风、供电、供水系统。编制最终验收记录，完整汇编竣工技术档案。',time:'1–2个月',who:'总承包商、专业单位、业主',law:'城市规划法典第55条 [grk]; СП 48规范 [sp48]',checks:['已完成消防安全系统测试','已完成通风及空调系统测试','已完成供电系统测试（负载测试）','已完成管道水压测试','竣工技术档案已完整汇编','所有建设监理意见已整改完毕'],questions:['所有系统的调试和测试工作是否已全部完成？','所有工程系统是否均有测试记录？','竣工技术档案是否已完整汇编？','国家建设监督局的所有整改通知是否已完成整改？'],warn:null},
+     ru:{name:'Финальные испытания и комплектация исп. документации',desc:'Перед получением разрешения на ввод проводятся испытания всех инженерных систем: пожарная сигнализация, вентиляция, электроснабжение, водоснабжение. Составляются финальные акты.',time:'1–2 мес.',who:'Генподрядчик, специализированные организации, заказчик',law:'ГрК РФ ст. 55 [grk]; СП 48.13330.2019 [sp48]',checks:['Проведены испытания систем пожарной безопасности','Проведены испытания вентиляции и кондиционирования','Проведены испытания электроснабжения (нагрузочные испытания)','Проведены гидравлические испытания трубопроводов','Скомплектована полная исполнительная документация','Устранены все замечания строительного контроля'],questions:['Завершены ли все пуско-наладочные работы и испытания систем?','Есть ли акты испытаний по всем инженерным системам?','Скомплектована ли исполнительная документация?','Устранены ли все предписания Госстройнадзора?'],warn:null}
+    },
+    {id:'5.2',
+     zh:{name:'竣工验收许可证（РВЭ）',desc:'由颁发施工许可证的同一机关颁发。申请时须提交完整的竣工技术档案、测试记录、地块权属证明、施工许可证及通过鉴定的设计文件。这是确认建设完工的最终法律文件。',time:'5个工作日（法定）；实际2–4周',who:'颁发施工许可证的机关',law:'城市规划法典第55条 [grk]',checks:['已取得竣工验收许可证','竣工验收许可证由有权机关颁发','竣工验收许可证中的项目参数与设计文件相符'],questions:['是否已取得竣工验收许可证？','如尚未取得——障碍在哪里？','实际建设参数是否与设计文件相符？'],warn:null},
+     ru:{name:'Разрешение на ввод в эксплуатацию (РВЭ)',desc:'Выдаётся тем же органом, который выдавал разрешение на строительство. Для получения необходимо предоставить полный комплект исполнительной документации, акты испытаний, документ о праве на участок, разрешение на строительство, ПД с экспертизой.',time:'5 раб. дней (закон); реально 2–4 нед.',who:'Орган, выдавший РС',law:'ГрК РФ ст. 55 [grk]',checks:['Получено разрешение на ввод в эксплуатацию','РВЭ выдано надлежащим органом','Параметры объекта в РВЭ соответствуют ПД'],questions:['Получено ли разрешение на ввод в эксплуатацию?','Если нет — что является препятствием?','Соответствуют ли фактические параметры объекта проектной документации?'],warn:null}
+    }
+   ]
   },
-  { id:'s6',
-    zh:{name:'后建设阶段',short:'产权登记'},
-    ru:{name:'Постстроительная стадия',short:'Регистрация'},
-    steps:[
-      { id:'6.1',
-        zh:{
-          name:'地籍登记与产权登记',
-          desc:'取得竣工验收许可证后，在不动产登记局（Росреестр）同步完成项目地籍登记和产权登记。这两项程序可合并办理（统一申请）。依据为联邦法218号和221号。',
-          time:'5–12个工作日', who:'不动产登记局、地籍工程师',
-          law:'联邦法218 [fz218]; 联邦法221 [fz221]',
-          checks:['项目已完成地籍登记','已分配地籍编号','产权已在统一国家不动产登记册（ЕГРН）中登记','已取得ЕГРН摘录确认登记完成'],
-          questions:['项目是否已完成地籍登记？地籍编号是什么？','产权是否已在ЕГРН中登记？','如尚未登记——办理登记的障碍是什么？'],
-          warn:null
-        },
-        ru:{
-          name:'Кадастровый учёт и регистрация права собственности',
-          desc:'После получения РВЭ объект ставится на кадастровый учёт и одновременно регистрируется право собственности в Росреестре. Эти процедуры могут выполняться одновременно (единое заявление). Основание — ФЗ-218 и ФЗ-221.',
-          time:'5–12 рабочих дней', who:'Росреестр, кадастровый инженер',
-          law:'ФЗ-218 [fz218]; ФЗ-221 [fz221]',
-          checks:['Объект поставлен на кадастровый учёт','Присвоен кадастровый номер','Право собственности зарегистрировано в ЕГРН','Получена выписка из ЕГРН с подтверждением регистрации'],
-          questions:['Стоит ли объект на кадастровом учёте? Каков кадастровый номер?','Зарегистрировано ли право собственности в ЕГРН?','Если нет — что является препятствием для регистрации?'],
-          warn:null
-        }
-      }
-    ]
+  {id:'s6',
+   zh:{name:'后建设阶段',short:'产权登记'},
+   ru:{name:'Постстроительная стадия',short:'Регистрация'},
+   steps:[
+    {id:'6.1',
+     zh:{name:'地籍登记与产权登记',desc:'取得竣工验收许可证后，在不动产登记局同步完成项目地籍登记和产权登记。这两项程序可合并办理（统一申请）。依据为联邦法218号和221号。',time:'5–12个工作日',who:'不动产登记局、地籍工程师',law:'联邦法218 [fz218]; 联邦法221 [fz221]',checks:['项目已完成地籍登记','已分配地籍编号','产权已在统一国家不动产登记册（ЕГРН）中登记','已取得ЕГРН摘录确认登记完成'],questions:['项目是否已完成地籍登记？地籍编号是什么？','产权是否已在ЕГРН中登记？','如尚未登记——办理登记的障碍是什么？'],warn:null},
+     ru:{name:'Кадастровый учёт и регистрация права собственности',desc:'После получения РВЭ объект ставится на кадастровый учёт и одновременно регистрируется право собственности в Росреестре. Эти процедуры могут выполняться одновременно (единое заявление). Основание — ФЗ-218 и ФЗ-221.',time:'5–12 рабочих дней',who:'Росреестр, кадастровый инженер',law:'ФЗ-218 [fz218]; ФЗ-221 [fz221]',checks:['Объект поставлен на кадастровый учёт','Присвоен кадастровый номер','Право собственности зарегистрировано в ЕГРН','Получена выписка из ЕГРН с подтверждением регистрации'],questions:['Стоит ли объект на кадастровом учёте? Каков кадастровый номер?','Зарегистрировано ли право собственности в ЕГРН?','Если нет — что является препятствием для регистрации?'],warn:null}
+    }
+   ]
   }
 ]};
 
-// ─── STATE & LANG ─────────────────────────────────────────────────────────────
+// ─── STATE ────────────────────────────────────────────────────────────────────
 let lang='zh', activeStage=0, activeStep=0, checked={};
 function getChecked(id){if(!checked[id])checked[id]=new Set();return checked[id];}
 
+// ─── LANG ─────────────────────────────────────────────────────────────────────
 function setLang(l){
   lang=l;
   document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',
@@ -515,25 +527,61 @@ function setLang(l){
   const u=UI[l];
   document.getElementById('logo-title').textContent=u.logoTitle;
   document.getElementById('logo-sub').textContent=u.logoSub;
-  document.getElementById('hero-tag').textContent=u.heroTag;
-  document.getElementById('hero-title').innerHTML=u.heroTitle;
-  document.getElementById('hero-sub').textContent=u.heroSub;
   document.getElementById('sidebar-title').textContent=u.sidebarTitle;
   document.getElementById('btn-prev').textContent=u.btnPrev;
   document.getElementById('btn-next').textContent=u.btnNext;
+  document.getElementById('export-label').textContent=u.exportLabel;
   document.getElementById('footer-text').textContent=u.footer;
   render();
 }
 
-// Рендерим бейджи с законами — кликабельные ссылки
-function renderLawBadges(lawStr) {
-  return parseLaw(lawStr).map(item => {
-    const law = item.key ? LAWS[item.key] : null;
-    if (law) {
-      return `<a class="badge badge-law" href="${law.url}" target="_blank" rel="noopener" title="${law.label}">📋 ${item.text}</a>`;
-    }
+// ─── LAW BADGES ───────────────────────────────────────────────────────────────
+function renderLawBadges(lawStr){
+  return parseLaw(lawStr).map(item=>{
+    const law=item.key?LAWS[item.key]:null;
+    if(law) return `<a class="badge badge-law" href="${law.url}" target="_blank" rel="noopener" title="${law.label} — consultant.ru">📋 ${item.text}</a>`;
     return `<span class="badge badge-law">📋 ${item.text}</span>`;
   }).join('');
+}
+
+// ─── EXCEL EXPORT ─────────────────────────────────────────────────────────────
+function exportExcel(){
+  const u=UI[lang];
+  const rows=[[u.excelTitle,'','','','','','']];
+  rows.push(['']);
+  rows.push([u.colStage,u.colStep,u.colName,u.colTime,u.colStatus,u.colDone,u.colTotal]);
+
+  DATA.stages.forEach(stage=>{
+    stage.steps.forEach(step=>{
+      const d=step[lang];
+      const c=getChecked(step.id);
+      const total=d.checks.length, done=c.size;
+      let status=u.statusPending;
+      if(done===total&&total>0) status=u.statusDone;
+      else if(done>0) status=u.statusPartial;
+      rows.push([stage[lang].name, step.id, d.name, d.time, status, done, total]);
+
+      // Детальные строки чеклиста
+      d.checks.forEach((chk,i)=>{
+        rows.push(['','','  '+(c.has(i)?'☑':'☐')+' '+chk,'','','','']);
+      });
+      rows.push(['','','','','','','']);
+    });
+  });
+
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+
+  // Ширина колонок
+  ws['!cols']=[{wch:22},{wch:8},{wch:52},{wch:20},{wch:14},{wch:10},{wch:10}];
+
+  // Мёрж заголовка
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:6}}];
+
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,lang==='zh'?'项目状态':'Статус проекта');
+
+  const date=new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,`construction-navigator-${date}.xlsx`);
 }
 
 // ─── RENDER ───────────────────────────────────────────────────────────────────
@@ -541,7 +589,15 @@ function render(){renderPipeline();renderMobileStageNav();renderStepList();rende
 
 function renderPipeline(){
   document.getElementById('pipeline').innerHTML=DATA.stages.map((s,i)=>{
-    const dots=s.steps.map(()=>`<span class="${i<activeStage?'done':''}"></span>`).join('');
+    const dots=s.steps.map(step=>{
+      const c=getChecked(step.id);
+      const total=step[lang].checks.length;
+      const done=c.size;
+      let cls='';
+      if(total>0&&done===total) cls='done';
+      else if(done>0) cls='partial';
+      return `<span class="${cls}"></span>`;
+    }).join('');
     return `<div class="pipe-stage ${i===activeStage?'active':''}" onclick="selectStage(${i})"><div class="pipe-stage-inner"><div class="pipe-num">0${i+1}</div><div class="pipe-label">${s[lang].short}</div><div class="pipe-dot">${dots}</div></div></div>`;
   }).join('');
 }
@@ -568,14 +624,13 @@ function renderDetail(){
   const checks=d.checks.map((txt,i)=>`<div class="check-item ${c.has(i)?'checked':''}" onclick="toggleCheck('${step.id}',${i})"><div class="check-box">${c.has(i)?'✓':''}</div><div class="check-text">${txt}</div></div>`).join('');
   const questions=d.questions.map(q=>`<div class="q-item">${q}</div>`).join('');
   const warn=d.warn?`<div class="warn-block"><strong>${u.warnLabel}</strong>${d.warn[lang]}</div>`:'';
-  const lawBadges=renderLawBadges(d.law);
-  document.getElementById('detailPanel').innerHTML=`<div class="detail"><div class="detail-header"><div class="detail-stage-tag">${u.stageLabel} ${activeStage+1} · ${stage[lang].name}</div><div class="detail-title">${step.id}. ${d.name}</div><div class="detail-meta"><span class="badge badge-time">⏱ ${d.time}</span><span class="badge badge-who">👤 ${d.who}</span>${lawBadges}</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="detail-body"><div class="section-label">${u.sectionDesc}</div><div class="desc-text">${d.desc}</div>${warn}<div class="section-label">${u.sectionChecks} · ${done}/${total}</div><div class="checklist">${checks}</div><div class="section-label">${u.sectionQuestions}</div><div class="questions">${questions}</div></div></div>`;
+  document.getElementById('detailPanel').innerHTML=`<div class="detail"><div class="detail-header"><div class="detail-stage-tag">${u.stageLabel} ${activeStage+1} · ${stage[lang].name}</div><div class="detail-title">${step.id}. ${d.name}</div><div class="detail-meta"><span class="badge badge-time">⏱ ${d.time}</span><span class="badge badge-who">👤 ${d.who}</span>${renderLawBadges(d.law)}</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div></div><div class="detail-body"><div class="section-label">${u.sectionDesc}</div><div class="desc-text">${d.desc}</div>${warn}<div class="section-label">${u.sectionChecks} · ${done}/${total}</div><div class="checklist">${checks}</div><div class="section-label">${u.sectionQuestions}</div><div class="questions">${questions}</div></div></div>`;
 }
 
 function selectStage(i){activeStage=i;activeStep=0;render();}
 function selectStep(i){activeStep=i;renderStepList();renderDetail();if(window.innerWidth<=768)document.getElementById('detailPanel').scrollIntoView({behavior:'smooth',block:'start'});}
-function toggleCheck(id,idx){const c=getChecked(id);c.has(idx)?c.delete(idx):c.add(idx);renderStepList();renderDetail();}
-function navigate(dir){const stage=DATA.stages[activeStage],newStep=activeStep+dir;if(newStep>=0&&newStep<stage.steps.length){selectStep(newStep);}else if(dir>0&&activeStage<DATA.stages.length-1){selectStage(activeStage+1);}else if(dir<0&&activeStage>0){activeStage--;activeStep=DATA.stages[activeStage].steps.length-1;render();}}
+function toggleCheck(id,idx){const c=getChecked(id);c.has(idx)?c.delete(idx):c.add(idx);renderPipeline();renderStepList();renderDetail();}
+function navigate(dir){const stage=DATA.stages[activeStage],ns=activeStep+dir;if(ns>=0&&ns<stage.steps.length){selectStep(ns);}else if(dir>0&&activeStage<DATA.stages.length-1){selectStage(activeStage+1);}else if(dir<0&&activeStage>0){activeStage--;activeStep=DATA.stages[activeStage].steps.length-1;render();}}
 
 render();
 </script>
