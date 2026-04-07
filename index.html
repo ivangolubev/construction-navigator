@@ -62,20 +62,20 @@
   .logo {
     display: flex; align-items: center; gap: 10px;
   }
-  .logo-mark {
-    width: 28px; height: 28px;
+  .logo-icon {
+    width: 32px; height: 32px;
     background: var(--accent);
-    border-radius: 6px;
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; font-weight: 500;
-    color: #fff;
-    letter-spacing: -0.5px;
+    flex-shrink: 0;
   }
+  .logo-icon svg { width: 18px; height: 18px; }
   .logo-text { line-height: 1.2; }
   .logo-title {
     font-size: 13px; font-weight: 600;
     color: var(--text); letter-spacing: -0.2px;
+    max-width: 320px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .logo-sub { font-size: 11px; color: var(--text-muted); }
 
@@ -141,13 +141,13 @@
   .pipe-stage.active .pipe-num { color: rgba(255,255,255,.6); }
   .pipe-label { font-size: 11px; font-weight: 500; color: var(--text-muted); line-height: 1.3; }
   .pipe-stage.active .pipe-label { color: #fff; font-weight: 600; }
-  .pipe-dot { display: flex; gap: 3px; margin-top: 7px; }
-  .pipe-dot span { width:5px; height:5px; border-radius:50%; background: var(--border2); }
+  .pipe-dot { display: flex; gap: 5px; margin-top: 8px; flex-wrap: wrap; }
+  .pipe-dot span { width:9px; height:9px; border-radius:50%; background: var(--border2); flex-shrink:0; }
   .pipe-stage.active .pipe-dot span { background: rgba(255,255,255,.35); }
   .pipe-dot span.done { background: var(--green); }
-  .pipe-dot span.partial { background: linear-gradient(90deg, var(--green) 50%, var(--border2) 50%); }
+  .pipe-dot span.partial { background: var(--orange); }
   .pipe-stage.active .pipe-dot span.done { background: #4ade80; }
-  .pipe-stage.active .pipe-dot span.partial { background: linear-gradient(90deg, #4ade80 50%, rgba(255,255,255,.25) 50%); }
+  .pipe-stage.active .pipe-dot span.partial { background: #fbbf24; }
 
   /* ── MAIN LAYOUT ── */
   .main {
@@ -322,6 +322,7 @@
     .pipeline{display:none;}
     .main{grid-template-columns:1fr;padding:0 16px 60px;} .sidebar{display:none;}
     .detail-header,.detail-body{padding:16px;}
+    .logo-title{max-width:160px;}
   }
 </style>
 </head>
@@ -329,7 +330,6 @@
 
 <header>
   <div class="logo">
-    <div class="logo-mark">CN</div>
     <div class="logo-text">
       <div class="logo-title" id="logo-title">建设导航</div>
       <div class="logo-sub" id="logo-sub">工业建设 · 俄罗斯联邦</div>
@@ -402,7 +402,7 @@ function parseLaw(str){
 
 const UI={
   zh:{
-    logoTitle:'建设导航',logoSub:'工业建设 · 俄罗斯联邦',
+    logoTitle:'工业设施设计与建设阶段',logoSub:'工业建设 · 俄罗斯联邦',
             sidebarTitle:'阶段步骤',stageLabel:'阶段',
     sectionDesc:'说明',sectionChecks:'核查清单',sectionQuestions:'谈判问题清单',
     warnLabel:'⚠ 注意',btnPrev:'← 上一步',btnNext:'下一步 →',
@@ -413,7 +413,7 @@ const UI={
     statusDone:'✅ 已完成',statusPartial:'⚠️ 进行中',statusPending:'⬜ 未开始',
   },
   ru:{
-    logoTitle:'Навигатор',logoSub:'промышленное строительство · РФ',
+    logoTitle:'Стадии проектирования и строительства',logoSub:'промышленное строительство · РФ',
         sidebarTitle:'Этапы стадии',stageLabel:'Стадия',
     sectionDesc:'Описание',sectionChecks:'Чеклист',sectionQuestions:'Вопросы для переговоров',
     warnLabel:'⚠ Внимание',btnPrev:'← Назад',btnNext:'Далее →',
